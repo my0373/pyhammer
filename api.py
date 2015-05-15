@@ -13,6 +13,7 @@ class Sat6(object):
     """
     A representation of a satellite 6 server
     """
+
     def __init__(self,
                  hostname,
                  username,
@@ -22,6 +23,8 @@ class Sat6(object):
         # Get the connection settings
         self.hostname = hostname
         self.https = https
+        self.post_headers = {'content-type': 'application/json'}
+
         if self.https:
             self.protocol = 'https'
         else:
@@ -89,6 +92,48 @@ class Sat6(object):
                                                           r.url)
         return r.json()
 
+    def createLocation(self,location_name):
+        """
+        Create a new location object using POST and json.
+        :param location_name:
+        :return:
+        """
+
+        self.new_location = { "location[name]":location_name,
+                              "name":location_name,
+                              "Title":location_name,
+                            }
+
+        self.postRequest(url='/api/v2/locations',
+                         data=self.new_location)
+
+
+    def postRequest(self,url,data):
+        """
+
+        :param kwargs: The parameters we wat to include with our POST request
+        :param url: The URL we are going to "POST"
+
+        :return:
+        """
+
+        self.url = url
+        self.data = data
+
+        # Generate the URL
+        self.fullurl = "%s://%s/%s" % (self.protocol, self.hostname, self.url)
+
+        r = requests.post(self.fullurl,
+                         auth=(self.username,
+                               self.password),
+                         verify=self.https,
+                         data=json.dumps(self.data),
+                         headers=self.post_headers)
+
+        print r.reason
+
+
+
 
 def main():
 
@@ -100,6 +145,7 @@ def main():
 
     print s.getContentViews(0)
     print s.getOrganizationByName('Default')
+    print s.createLocation('test123')
 
 
 if __name__ == '__main__':
