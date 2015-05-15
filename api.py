@@ -92,7 +92,8 @@ class Sat6(object):
 
 def main():
 
-    s = Sat6(hostname='satellite3.maclab',
+    # Yes these passowrds are left here deliberatly!
+    s = Sat6(hostname='satellite3',
              username='myork',
              password='redhat',
              https=False)
