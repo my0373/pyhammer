@@ -24,6 +24,7 @@ class Sat6(object):
         self.hostname = hostname
         self.https = https
         self.post_headers = {'content-type': 'application/json'}
+        self.put_headers = {'content-type': 'application/json'}
 
         if self.https:
             self.protocol = 'https'
@@ -42,7 +43,7 @@ class Sat6(object):
         :param organization_label:
         :return:
         """
-        return self.getRequest('/katello/api/v2/organizations',
+        return self.getRequest('katello/api/v2/organizations',
                                search=organization_label,
                                full_results='yes')['results'][0]
 
@@ -74,12 +75,55 @@ class Sat6(object):
         :return:
         """
         content_hosts = self.getContentHostsFromHC(org_id,old_host_collection)
-        return content_hosts
 
-    def removeContentHostsFromHC(self,):
-        "/katello/api/v2/host_collections/:id/remove_systems"
+        system_ids = [content_hosts[key]['uuid'] for key, val in content_hosts.iteritems()]
 
-    def getContentHostsFromHC(self,org_id,host_collection):
+        #TODO: Nasty hack, not proud of it, will come back and refactor it later.
+        hc_id = [content_hosts[key]['hc_id'] for key, val in content_hosts.iteritems()][0]
+
+        new_hc_id = self.getHostCollectionID(org_id,new_host_collection)['host_collection_id']
+
+        print "Removing from old HC"
+        self.removeContentHostsFromHC(hc_id,system_ids)
+
+        print "Adding to new HC"
+        self.addContentHostsToHC(new_hc_id,system_ids)
+
+        #return content_hosts['']
+
+    def removeContentHostsFromHC(self,hc_id,system_ids):
+        """
+        Remove the content hosts specified in the list "system_id" by their uuid
+        from the host collection specified by hc_id
+        :param hc_id: The host collection id
+        :param system_ids: a list of uuids to remove
+        :return:
+        """
+
+        url = "katello/api/v2/host_collections/%s/remove_systems" % hc_id
+
+        data = {'id':hc_id,
+                'system_ids': system_ids}
+
+        return self.putRequest(url,data)
+
+    def addContentHostsToHC(self,hc_id,system_ids):
+        """
+        Add the content hosts specified in the list "system_id" by their uuid
+        to the host collection specified by hc_id
+        :param hc_id: The host collection id
+        :param system_ids: a list of uuids to add
+        :return:
+        """
+
+        url = "katello/api/v2/host_collections/%s/add_systems" % hc_id
+
+        data = {'id':hc_id,
+                'system_ids': system_ids}
+
+        return self.putRequest(url,data)
+
+    def getHostCollectionID(self,org_id,host_collection):
         """
         Get the content hosts from the named host collection.
         :param HostCollection:
@@ -89,14 +133,32 @@ class Sat6(object):
 
         # Get the id, and content host totals of the host collection
         # that matches the name passed to us.
-        url = '/katello/api/v2/organizations/%s/host_collections' % (org_id)
+        url = 'katello/api/v2/organizations/%s/host_collections' % (org_id)
         host_collection_info = self.getRequest(url,
                                             organization_id=org_id,
                                             name=host_collection,
                                             )['results'][0]
 
-        host_collection_id = host_collection_info['id']
-        host_collection_hostcount = host_collection_info['total_content_hosts']
+        returndict = {}
+
+        returndict['host_collection_id'] = host_collection_info['id']
+        returndict['host_collection_hostcount'] = host_collection_info['total_content_hosts']
+
+        return returndict
+
+
+    def getContentHostsFromHC(self,org_id,host_collection):
+        """
+        Get the content hosts from the named host collection.
+        :param HostCollection:
+        :return:
+        """
+
+
+        hc_info = self.getHostCollectionID(org_id, host_collection)
+
+        host_collection_id = hc_info['host_collection_id']
+        host_collection_hostcount = hc_info['host_collection_hostcount']
 
 
 
@@ -110,7 +172,7 @@ class Sat6(object):
         # We return this data as a dictionary.
 
 
-        url = '/katello/api/v2/host_collections/%s/systems' % (host_collection_id)
+        url = 'katello/api/v2/host_collections/%s/systems' % (host_collection_id)
         content_hosts = self.getRequest(url,id=host_collection_id)['results']
 
         returndict = {}
@@ -119,13 +181,43 @@ class Sat6(object):
             hostname = content_hosts[host]['name']
             uuid = content_hosts[host]['uuid']
             hostcollection = content_hosts[host]['hostCollections'][0]['name']
+            id = content_hosts[host]['id']
 
+            # The data structure we return
             returndict[hostname] = {u'uuid': uuid,
                                     u'name': hostname,
                                     u'hc': hostcollection,
+                                    u'system_id': id,
+                                    u'hc_id': host_collection_id,
                                     }
 
+
         return returndict
+
+
+    def putRequest(self,url,data):
+
+        self.url = url
+        self.data = data
+
+        # Generate the URL
+        self.fullurl = "%s://%s/%s" % (self.protocol, self.hostname, self.url)
+
+
+
+        r = requests.put(self.fullurl,
+                         auth=(self.username,
+                               self.password),
+                         verify=self.https,
+                         data=json.dumps(self.data),
+                         headers=self.put_headers)
+        print json.dumps(self.data)
+        print r.url
+        print r.status_code
+        print r.reason
+
+
+        return r
 
     def getRequest(self,url,**kwargs):
         """
@@ -218,7 +310,8 @@ def main():
     #print s.getContentViews(0)
     #print s.getOrganizationByName('Default')
     oid = s.getOrganizationIDByName('Default')
-    s.moveHostCollectionHosts(oid, 'HC1', 'HC2')
+    #s.moveHostCollectionHosts(oid, 'HC1', 'HC2')
+    s.moveHostCollectionHosts(oid, 'HC2', 'HC1')
     #print s.createLocation('test123')
 
 
