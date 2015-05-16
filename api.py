@@ -46,6 +46,17 @@ class Sat6(object):
                                search=organization_label,
                                full_results='yes')['results'][0]
 
+    def getOrganizationIDByName(self,organization_label):
+        """
+        This is a wrapper method to return just the id from the
+        method getOrganizationByName.
+
+
+        :param organization_label:
+        :return:
+        """
+        return self.getOrganizationByName(organization_label)[u'id']
+
     def getContentViews(self,organization_id):
         """
         :param organization_id:
@@ -53,6 +64,68 @@ class Sat6(object):
         """
         return self.getRequest('katello/api/v2/content_views',
                                organization_id=organization_id)
+
+    def moveHostCollectionHosts(self,org_id,old_host_collection,new_host_collection):
+        """
+        Method to move hosts from one host collection to another.
+        It assumes we will move ALL hosts in the host collection.
+        :param old_host_collection:
+        :param new_host_collection:
+        :return:
+        """
+        content_hosts = self.getContentHostsFromHC(org_id,old_host_collection)
+        return content_hosts
+
+    def removeContentHostsFromHC(self,):
+        "/katello/api/v2/host_collections/:id/remove_systems"
+
+    def getContentHostsFromHC(self,org_id,host_collection):
+        """
+        Get the content hosts from the named host collection.
+        :param HostCollection:
+        :return:
+        """
+
+
+        # Get the id, and content host totals of the host collection
+        # that matches the name passed to us.
+        url = '/katello/api/v2/organizations/%s/host_collections' % (org_id)
+        host_collection_info = self.getRequest(url,
+                                            organization_id=org_id,
+                                            name=host_collection,
+                                            )['results'][0]
+
+        host_collection_id = host_collection_info['id']
+        host_collection_hostcount = host_collection_info['total_content_hosts']
+
+
+
+        # So now we have the id for the host collection, we get a dump of all the
+        # data for that collection, looking for 'host_collection_hostcount' number of hosts.
+        # When we find them, we collect the hostname, uuid, and a single hc.
+
+        # Please only assign a host to a single content group, otherwise it will
+        # probably break this code.
+
+        # We return this data as a dictionary.
+
+
+        url = '/katello/api/v2/host_collections/%s/systems' % (host_collection_id)
+        content_hosts = self.getRequest(url,id=host_collection_id)['results']
+
+        returndict = {}
+        for host in range (0,host_collection_hostcount):
+
+            hostname = content_hosts[host]['name']
+            uuid = content_hosts[host]['uuid']
+            hostcollection = content_hosts[host]['hostCollections'][0]['name']
+
+            returndict[hostname] = {u'uuid': uuid,
+                                    u'name': hostname,
+                                    u'hc': hostcollection,
+                                    }
+
+        return returndict
 
     def getRequest(self,url,**kwargs):
         """
@@ -107,7 +180,6 @@ class Sat6(object):
         self.postRequest(url='/api/v2/locations',
                          data=self.new_location)
 
-
     def postRequest(self,url,data):
         """
 
@@ -138,14 +210,16 @@ class Sat6(object):
 def main():
 
     # Yes these passowrds are left here deliberatly!
-    s = Sat6(hostname='satellite3',
+    s = Sat6(hostname='192.168.0.11',
              username='myork',
              password='redhat',
              https=False)
 
-    print s.getContentViews(0)
-    print s.getOrganizationByName('Default')
-    print s.createLocation('test123')
+    #print s.getContentViews(0)
+    #print s.getOrganizationByName('Default')
+    oid = s.getOrganizationIDByName('Default')
+    s.moveHostCollectionHosts(oid, 'HC1', 'HC2')
+    #print s.createLocation('test123')
 
 
 if __name__ == '__main__':
