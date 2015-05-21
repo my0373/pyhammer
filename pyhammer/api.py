@@ -1,6 +1,7 @@
 __author__ = 'Matt York myork@redhat.com'
 
 import sys
+import os
 import json
 
 try:
@@ -146,7 +147,6 @@ class Sat6(object):
 
         return returndict
 
-
     def getContentHostsFromHC(self,org_id,host_collection):
         """
         Get the content hosts from the named host collection.
@@ -193,7 +193,6 @@ class Sat6(object):
 
 
         return returndict
-
 
     def putRequest(self,url,data):
 
@@ -296,24 +295,3 @@ class Sat6(object):
 
         print r.reason
 
-
-
-
-def main():
-
-    # Yes these passowrds are left here deliberatly!
-    s = Sat6(hostname='192.168.0.11',
-             username='myork',
-             password='redhat',
-             https=False)
-
-    #print s.getContentViews(0)
-    #print s.getOrganizationByName('Default')
-    oid = s.getOrganizationIDByName('Default')
-    #s.moveHostCollectionHosts(oid, 'HC1', 'HC2')
-    s.moveHostCollectionHosts(oid, 'HC2', 'HC1')
-    #print s.createLocation('test123')
-
-
-if __name__ == '__main__':
-    main()
