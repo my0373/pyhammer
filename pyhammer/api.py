@@ -3,11 +3,14 @@ __author__ = 'Matt York myork@redhat.com'
 import sys
 import os
 import json
+import logging
+from pyhammer.exceptions import NoOrganisationFound
 
 try:
     import requests
 except ImportError:
     print "Please install the python-requests module."
+    logging.critical("Please install the python-requests module.")
     sys.exit(1)
 
 class Sat6(object):
@@ -20,6 +23,8 @@ class Sat6(object):
                  username,
                  password,
                  https=False):
+
+        logger = logging.getLogger(__name__)
 
         # Get the connection settings
         self.hostname = hostname
@@ -44,9 +49,17 @@ class Sat6(object):
         :param organization_label:
         :return:
         """
-        return self.getRequest('katello/api/v2/organizations',
+        try:
+            results = self.getRequest('katello/api/v2/organizations',
                                search=organization_label,
                                full_results='yes')['results'][0]
+        except IndexError:
+            # If this is raised, it means there were not enough values returned by the rest request.
+            # The actual failure is a failure to the first element from the results.
+            # It implies an organisation couldn't be found within satellite.
+            raise NoOrganisationFound
+
+        return results
 
     def getOrganizationIDByName(self,organization_label):
         """
@@ -84,9 +97,11 @@ class Sat6(object):
 
         new_hc_id = self.getHostCollectionID(org_id,new_host_collection)['host_collection_id']
 
-        print "Removing from old HC"
+        logging.info("Removing from old host collection %s" % hc_id )
+        print ""
         self.removeContentHostsFromHC(hc_id,system_ids)
 
+        logging.info("Adding to new host collection %s" % new_hc_id )
         print "Adding to new HC"
         self.addContentHostsToHC(new_hc_id,system_ids)
 
@@ -199,8 +214,11 @@ class Sat6(object):
         self.url = url
         self.data = data
 
+
         # Generate the URL
         self.fullurl = "%s://%s/%s" % (self.protocol, self.hostname, self.url)
+        logging.info("PUT request to URL %s" % self.fullurl )
+        logging.info("PUT request json data " % json.dumps(self.data) )
 
 
 
@@ -210,6 +228,8 @@ class Sat6(object):
                          verify=self.https,
                          data=json.dumps(self.data),
                          headers=self.put_headers)
+
+        logging.info("Removing from old host collection %s" % hc_id )
         print json.dumps(self.data)
         print r.url
         print r.status_code
@@ -230,6 +250,8 @@ class Sat6(object):
 
         # Generate the URL
         self.fullurl = "%s://%s/%s" % (self.protocol, self.hostname, self.url)
+        logging.info("GET request to URL %s" % self.fullurl )
+        logging.info("GET request JSON data : %s" % json.dumps(kwargs) )
 
 
         r = requests.get(self.fullurl,
@@ -285,6 +307,8 @@ class Sat6(object):
 
         # Generate the URL
         self.fullurl = "%s://%s/%s" % (self.protocol, self.hostname, self.url)
+        logging.info("POST request to URL %s" % self.fullurl )
+        logging.info("POST request JSON data : %s" % json.dumps(kwargs) )
 
         r = requests.post(self.fullurl,
                          auth=(self.username,
@@ -293,5 +317,6 @@ class Sat6(object):
                          data=json.dumps(self.data),
                          headers=self.post_headers)
 
-        print r.reason
+        logging.info("POST results : %s" % r.reason )
+
 

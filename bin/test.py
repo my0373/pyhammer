@@ -1,6 +1,9 @@
 
 ## Import the sat6 library
 from pyhammer.api import Sat6
+from pyhammer.exceptions import NoOrganisationFound
+import sys
+
 import logging
 
 __author__ = 'myork'
@@ -29,7 +32,16 @@ def main():
     org_name = 'Redhat_Consulting'
 
     #print s.getContentViews(0)
-    print s.getOrganizationByName(org_name)
+
+    # Attempt to get the organisation id from the satellite, if we can't find it, handle the exception gracefully.
+    # and exit.
+    try:
+        print s.getOrganizationByName(org_name)
+    except NoOrganisationFound:
+        print "No organisation '%s' was found on the satellite '%s'" % (org_name,hostname)
+        logger.info("No organisation '%s' was found on the satellite '%s'" % (org_name,hostname))
+        sys.exit(1)
+
     #oid = s.getOrganizationIDByName('Default')
     #s.moveHostCollectionHosts(oid, 'HC1', 'HC2')
     #s.moveHostCollectionHosts(oid, 'HC2', 'HC1')
