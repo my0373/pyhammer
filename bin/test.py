@@ -1,8 +1,9 @@
 
 ## Import the sat6 library
 from pyhammer.api import Sat6
-from pyhammer.exceptions import NoOrganisationFound
+from pyhammer.exceptions import OrganizationNotFound
 import sys
+
 
 import logging
 
@@ -20,7 +21,7 @@ def main():
     logging.basicConfig(level=loglevel)
     logger = logging.getLogger(__name__)
 
-    # Yes these passowrds are left here deliberatly!
+    # Yes these passowrds are left here deliberatly!!
     s = Sat6(hostname=hostname,
              username= username,
              password=password,
@@ -47,5 +48,41 @@ def main():
     #s.moveHostCollectionHosts(oid, 'HC2', 'HC1')
     #print s.createLocation('test123')
 
+def testcreate():
+    logging.basicConfig(level=loglevel)
+    logger = logging.getLogger(__name__)
+
+    
+    hostname = '192.168.100.3'
+    username = 'admin'
+    password = 'redhat'
+    https = False
+    testorgname = "Test Organization"
+    testorglabel = "Test_Organization"
+    testorgdescription = "Test Description Of \n this Organization"
+
+    
+    
+    sat6 = Sat6(hostname=hostname,
+              username=username,
+              password=password,
+              https=False)
+    
+    #target_org = sat6.getOrganizationIDByName("Test_Organization")
+
+    #if target_org:
+    #    print sat6.deleteOrganization(target_org)
+
+    result = sat6.createOrganization(name=testorgname,
+                                     label=testorglabel,
+                                     description=testorgdescription,
+                                    )
+
+
+    
+    
+
 if __name__ == '__main__':
-    main()
+    #main()
+    testcreate()
+

@@ -4,10 +4,11 @@ import sys
 import os
 import json
 import logging
-from pyhammer.exceptions import NoOrganisationFound
+from pyhammer.exceptions import *
 
 try:
     import requests
+
 except ImportError:
     print "Please install the python-requests module."
     logging.critical("Please install the python-requests module.")
@@ -18,11 +19,20 @@ class Sat6(object):
     A representation of a satellite 6 server
     """
 
+
     def __init__(self,
                  hostname,
                  username,
                  password,
                  https=False):
+        """
+
+        :param hostname:
+        :param username:
+        :param password:
+        :param https:
+        :return:
+        """
 
         logger = logging.getLogger(__name__)
 
@@ -31,6 +41,7 @@ class Sat6(object):
         self.https = https
         self.post_headers = {'content-type': 'application/json'}
         self.put_headers = {'content-type': 'application/json'}
+        self.delete_headers = {'content-type': 'application/json'}
 
         if self.https:
             self.protocol = 'https'
@@ -39,6 +50,69 @@ class Sat6(object):
 
         self.username = username
         self.password = password
+
+    def deleteOrganization(self,org_id,contextid):
+        """
+        Delete an exising organization by organization_id
+
+        """
+        delete_organization = { "id":org_id }
+
+        durl = 'katello/api/v2/organizations/%s/' % org_id
+
+        result = self.deleteRequest(url=durl ,
+                                data=delete_organization,contextid=contextid)
+
+        logging.debug(result)
+
+
+
+
+
+        return result
+        #resultdict = {"success":result.ok,
+        #              "code":result.status_code,
+        #              "reason":result.reason,
+        #              "error_text":str(json.loads(result.text)["error"]["errors"]["title"][0]),
+        #              }
+
+        #return resultdict
+
+    def createOrganization(self,name,label,description):
+        """
+        Create a new organization
+        :param name:
+        :param label:
+        :param description:
+        :return:
+        """
+        new_organization = { "name":name,
+                              "label":label,
+                              "description":description,
+                            }
+
+        result = self.postRequest(url='/katello/api/v2/organizations',
+                                data=new_organization)
+
+
+        if result.ok:
+            resultdict = {"success":result.ok,
+                          "code":result.status_code,
+                          "reason":result.reason,
+                          "error_text":"",
+            }
+        else:
+            resultdict = {"success":result.ok,
+                          "code":result.status_code,
+                          "reason":result.reason,
+                          "error_text":str(json.loads(result.text)["error"]["errors"]["title"][0]),
+                         }
+            raise FailToCreateOrganization(resultdict["code"],
+                                           resultdict["error_text"],
+                                           name)
+
+        return resultdict
+
 
     def getOrganizationByName(self,organization_label):
         """
@@ -57,7 +131,7 @@ class Sat6(object):
             # If this is raised, it means there were not enough values returned by the rest request.
             # The actual failure is a failure to the first element from the results.
             # It implies an organisation couldn't be found within satellite.
-            raise NoOrganisationFound
+            raise OrganizationNotFound
 
         return results
 
@@ -238,7 +312,7 @@ class Sat6(object):
 
         return r
 
-    def getRequest(self,url,**kwargs):
+    def getRequest(self,url,contextid,**kwargs):
         """
 
         :param kwargs: The parameters we wat to include with our GET request
@@ -250,8 +324,8 @@ class Sat6(object):
 
         # Generate the URL
         self.fullurl = "%s://%s/%s" % (self.protocol, self.hostname, self.url)
-        logging.info("GET request to URL %s" % self.fullurl )
-        logging.info("GET request JSON data : %s" % json.dumps(kwargs) )
+        logging.info("CTX=%d:GET request to URL %s" % (contextid,self.fullurl )
+        logging.info("CTX=%d:GET request JSON data : %s" % (contextid,json.dumps(kwargs)) )
 
 
         r = requests.get(self.fullurl,
@@ -308,7 +382,7 @@ class Sat6(object):
         # Generate the URL
         self.fullurl = "%s://%s/%s" % (self.protocol, self.hostname, self.url)
         logging.info("POST request to URL %s" % self.fullurl )
-        logging.info("POST request JSON data : %s" % json.dumps(kwargs) )
+
 
         r = requests.post(self.fullurl,
                          auth=(self.username,
@@ -317,6 +391,40 @@ class Sat6(object):
                          data=json.dumps(self.data),
                          headers=self.post_headers)
 
+
         logging.info("POST results : %s" % r.reason )
 
+
+        return r
+
+    def deleteRequest(self,url,data,contextid):
+        """
+
+        :param kwargs: The parameters we wat to include with our POST request
+        :param url: The URL we are going to "POST"
+
+        :return:
+        """
+
+        self.url = url
+        self.data = data
+
+        # Generate the URL
+        self.fullurl = "%s://%s/%s" % (self.protocol, self.hostname, self.url)
+        logging.info("CTX=%d:DELETE request to URL %s" % (contextid,self.fullurl) )
+        logging.debug("CTX=%d:DELETE JSON data: %s" % (contextid,self.data) )
+
+
+        r = requests.delete(self.fullurl,
+                         auth=(self.username,
+                               self.password),
+                         verify=self.https,
+                         data=json.dumps(self.data),
+                         headers=self.delete_headers)
+
+
+        logging.info("CTX=%d:DELETE results : %s" % (contextid,r.reason ))
+
+
+        return r
 
