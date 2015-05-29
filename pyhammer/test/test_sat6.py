@@ -1,9 +1,8 @@
 from unittest import TestCase
-from pyhammer.api import Sat6
-from pyhammer.exceptions import *
 import logging
-import requests
 
+from pyhammer.deprecated.api import Sat6
+from pyhammer.exceptions import *
 
 __author__ = 'myork'
 

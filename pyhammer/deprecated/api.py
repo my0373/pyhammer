@@ -1,9 +1,8 @@
 __author__ = 'Matt York myork@redhat.com'
 
 import sys
-import os
 import json
-import logging
+
 from pyhammer.exceptions import *
 
 try:
@@ -149,6 +148,7 @@ class Sat6(object):
     def getContentViews(self,organization_id):
         """
         :param organization_id:
+        :return:
         :return:
         """
         return self.getRequest('katello/api/v2/content_views',

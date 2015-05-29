@@ -4,6 +4,9 @@ import logging
 class OrganizationNotFound(Exception):
     pass
 
+class NoOrganizationsFound(Exception):
+    pass
+
 class FailToDeleteOrganization(Exception):
     def __init__(self,status_code,
                  message,
