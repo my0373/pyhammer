@@ -1,12 +1,17 @@
 __author__ = 'Matt York (myork@redhat.com)'
 """
-This module holds only the primitave REST methods.
+This module holds only the primitive REST methods.
 I've seperated them out for ease of testing, and for clarity.
 
 """
 
 from logwrapper import *
+
+import exceptions
+
 import requests
+
+
 import json
 
 class BaseREST(object):
@@ -59,7 +64,6 @@ class BaseREST(object):
         logdebug("protocol = %s" % (self.protocol),self.cid)
 
 
-
     def restRequest(self,rtype,url,data=None):
         """
         This is the only method that will actually make a call to the REST interface.
@@ -100,16 +104,17 @@ class BaseREST(object):
                                         verify=self.https,
                                         params=data)
 
-        # Capture the HTPT status code, and json packed results
+        # Capture the HTTP status code, and json packed results
         result_code = restresponse.status_code
         json_results = restresponse.json()
+        json_results['status_code'] = result_code
 
         # Log the fact we have run
         loginfo("Request completed with status code %d" % (result_code), self.cid)
         loginfo("Request completed with json results %s" % (json_results), self.cid)
 
         # Return only the JSON Results
-        return restresponse.json()
+        return json_results
 
     def getRequest(self, url, data):
         """
@@ -122,10 +127,17 @@ class BaseREST(object):
         fullurl = "%s://%s/%s" % (self.protocol, self.hostname, url)
 
         # Issue the request
-        return self.restRequest(requesttype,
+        requestResult = self.restRequest(requesttype,
                                 fullurl,
-                                json.dumps(data)
-                                )
+                                json.dumps(data))
+
+        ## If we get a response code of 401 then we have failed to authenticate.
+        if requestResult['status_code'] == 401:
+            raise exceptions.RESTAuthenticationFailure()
+
+
+
+        return requestResult
 
     def postRequest(self, url, data):
         """

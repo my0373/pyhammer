@@ -4,8 +4,8 @@ __author__ = 'myork'
 
 
 
-from pyhammer.exceptions import OrganizationNotFound
-from pyhammer.rest import BaseREST
+from pyhammer.lib.exceptions import OrganizationNotFound
+from pyhammer.lib.rest import BaseREST
 
 class Organization(object):
     """

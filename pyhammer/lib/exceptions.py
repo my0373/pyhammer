@@ -7,6 +7,9 @@ class OrganizationNotFound(Exception):
 class NoOrganizationsFound(Exception):
     pass
 
+class RESTAuthenticationFailure(Exception):
+    pass
+
 class FailToDeleteOrganization(Exception):
     def __init__(self,status_code,
                  message,

@@ -1,12 +1,11 @@
-from pyhammer.organizations import Organization
 import logging
 
-
+from pyhammer.lib.organizations import Organization
 
 __author__ = 'myork'
 
 loglevel = logging.CRITICAL
-username = 'myork'
+username = 'admin'
 password = 'redhat'
 https = False
 hostname = '192.168.100.3'
@@ -20,7 +19,7 @@ def testOrgQuery():
                     https)
 
     #print a.getAllOrganizations()
-    print a.getOrganizationByLabel('redhat')
+    print a.getOrganizationByLabel('Redhat_Consulting')
 
 
 

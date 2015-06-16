@@ -3,7 +3,7 @@ __author__ = 'Matt York myork@redhat.com'
 import sys
 import json
 
-from pyhammer.exceptions import *
+from pyhammer.lib.exceptions import *
 
 try:
     import requests
