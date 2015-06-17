@@ -1,25 +1,25 @@
 import logging
 
 from pyhammer.lib.organizations import Organization
+from pyhammer.lib.credentials import Credentials
 
 __author__ = 'myork'
 
+
+
 loglevel = logging.CRITICAL
-username = 'admin'
-password = 'redhat'
-https = False
-hostname = '192.168.100.3'
-organization_label = 'Redhat_Consulting'
 
 
 def testOrgQuery():
-    a = Organization(hostname,
-                    username,
-                    password,
-                    https)
+    credentials = Credentials()
+
+    a = Organization(hostname=credentials.server,
+                    username=credentials.username,
+                    password=credentials.password,
+                    https=credentials.https)
 
     #print a.getAllOrganizations()
-    print a.getOrganizationByLabel('Redhat_Consulting')
+    print a.getOrganizationByLabel(credentials.organization)
 
 
 

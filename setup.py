@@ -10,7 +10,7 @@ setup(
     author='Matt York',
     author_email='myork@redhat.com',
     description='A python wrapper around the Red hat satellite 6 API methods.',
-
+    install_requires=['requests'],
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         # How mature is this project? Common values are
