@@ -17,6 +17,37 @@ class Organization(object):
                             password,
                             https)
 
+    def createOrganization(self,label,name=None,description=None):
+        """
+        Create an organization
+        """
+
+        # The URL to pass to the post request
+        url = "katello/api/v2/organizations"
+
+        # Define the data
+        data = {'label':label,
+                'name':name,
+                'description':description}
+
+        # Execute the create request
+        return self.api.postRequest(url,data)
+
+    def deleteOrganizationByID(self,org_id):
+        """
+        Delete an organisation by the Org ID
+        """
+        # The URL to pass to the GET request
+        url = "katello/api/v2/organizations/%s/" % org_id
+
+        data = {"id":org_id,}
+
+        return self.api.deleteRequest(url,data)
+
+    def deleteOrganizationByLabel(self,label):
+        org_id = self.getOrganizationByLabel(label)['id']
+        self.deleteOrganizationByID(org_id)
+
     def getAllOrganizationsIndexByID(self):
         """
         Get all organizations and use the organization ID as
@@ -40,6 +71,7 @@ class Organization(object):
         for org in self.api.getRequest(url,data)['results']:
             orgdict[int(org["id"])] = org
 
+
         return orgdict
 
     def getAllOrganizationsIndexByLabel(self):
@@ -51,8 +83,9 @@ class Organization(object):
         url = "katello/api/v2/organizations"
 
         # The structured JSON data we will pass
-        data = {'full_results':True,
-                'per_page':9999,
+        data = {'per_page':10,
+                'page':1,
+                'sort[order]':'ASC',
                }
 
         # Define the return dictionary
@@ -87,7 +120,6 @@ class Organization(object):
             raise OrganizationNotFound()
 
         return result
-
 
     def getOrganizationByID(self,org_id):
         """

@@ -41,7 +41,7 @@ class BaseREST(object):
         self.username = username
         self.password = password
         self.https = https
-        self.post_headers = {'content-type': 'application/json'}
+        self.post_headers = {u'content-type': u'application/json'}
         self.put_headers = {'content-type': 'application/json'}
         self.delete_headers = {'content-type': 'application/json'}
 
@@ -79,16 +79,18 @@ class BaseREST(object):
                                         verify=self.https,
                                         params=data)
 
+
         # If the request is a POST request                               )
-        elif rtype.lower in 'post':
+        elif rtype.lower() in 'post':
             restresponse = requests.post(url,
                                         auth=(self.username,
                                               self.password),
                                         verify=self.https,
-                                        params=data)
+                                        data=json.dumps(data),
+                                        headers=self.post_headers)
 
         # If the request is a DELETE request
-        elif rtype.lower in 'delete':
+        elif rtype.lower() in 'delete':
             restresponse = requests.delete(url,
                                         auth=(self.username,
                                               self.password),
@@ -97,7 +99,7 @@ class BaseREST(object):
             pass
 
         # If the request is a PUT request
-        elif rtype.lower in 'put':
+        elif rtype.lower() in 'put':
             restresponse = requests.put(url,
                                         auth=(self.username,
                                               self.password),
@@ -105,16 +107,7 @@ class BaseREST(object):
                                         params=data)
 
         # Capture the HTTP status code, and json packed results
-        result_code = restresponse.status_code
-        json_results = restresponse.json()
-        json_results['status_code'] = result_code
-
-        # Log the fact we have run
-        loginfo("Request completed with status code %d" % (result_code), self.cid)
-        loginfo("Request completed with json results %s" % (json_results), self.cid)
-
-        # Return only the JSON Results
-        return json_results
+        return restresponse
 
     def getRequest(self, url, data):
         """
@@ -131,13 +124,22 @@ class BaseREST(object):
                                 fullurl,
                                 json.dumps(data))
 
-        ## If we get a response code of 401 then we have failed to authenticate.
-        if requestResult['status_code'] == 401:
-            raise exceptions.RESTAuthenticationFailure()
+
+        # Collect the HTTP status code
+        result_code = requestResult.status_code
+
+
+        # Unpack the results from HTTP response
+        json_results = requestResult.json()
+
+        # Log the fact we have run
+        loginfo("Request completed with status code %d" % (result_code), self.cid)
+        loginfo("Request completed with json results %s" % (json_results), self.cid)
 
 
 
-        return requestResult
+        # Return the unpacked results
+        return json_results
 
     def postRequest(self, url, data):
         """
