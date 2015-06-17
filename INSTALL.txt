@@ -1,0 +1,2 @@
+# To install pyhammer, run the following.
+python setup.py install
