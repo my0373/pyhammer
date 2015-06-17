@@ -1,0 +1,6 @@
+include LICENSE
+recursive-include bin *.sh *.py
+recursive-include pyhammer/lib *.py
+recursive-include pyhammer/test *.py
+prune pyhammer/deprecated
+include *.py
