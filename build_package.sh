@@ -6,4 +6,4 @@ rm -rf build
 rm -rf dist
 
 # Create the source package
-python setup sdist
+python setup.py sdist
